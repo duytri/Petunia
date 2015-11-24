@@ -14,7 +14,7 @@ class PetuniaMain {
     val sc = new SparkContext(conf)
     
     // Load training data in LIBSVM format.
-    val data = MLUtils.loadLibSVMFile(sc, "/home/hduser/spark/data/mllib/sample_libsvm_data.txt")
+    val data = MLUtils.loadLibSVMFile(sc, "/home/hduser/git/Petunia/Petunia/data/in/sample_libsvm_data.txt")
 
     // Split data into training (60%) and test (40%).
     val splits = data.randomSplit(Array(0.6, 0.4), seed = 11L)
@@ -41,7 +41,7 @@ class PetuniaMain {
     println("Area under ROC = " + auROC)
 
     // Save and load model
-    model.save(sc, "/home/hduser/workspace/svmModels")
-    val sameModel = SVMModel.load(sc, "/home/hduser/workspace/svmModels")
+    model.save(sc, "/home/hduser/git/Petunia/Petunia/data/out/svmModels.model")
+    val sameModel = SVMModel.load(sc, "/home/hduser/git/Petunia/Petunia/data/out/svmModels.model")
   }
 }
