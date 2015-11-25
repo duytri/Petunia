@@ -11,23 +11,97 @@ import vn.hus.nlp.sd.SentenceDetectorFactory
 import vn.hus.nlp.tokenizer.TokenizerOptions
 import vn.hus.nlp.tokenizer.VietTokenizer
 import vn.hus.nlp.utils.FileIterator
-import vn.hus.nlp.utils.TextFileFilter;
-import scala.util.Properties
+import vn.hus.nlp.utils.TextFileFilter
+import java.util.Properties
+import java.io.File
+import scala.collection.immutable.HashMap
 
 class PetuniaMain {
   def main(args: Array[String]): Unit = {
     val conf = new SparkConf().setAppName("ISLab.Petunia")
     val sc = new SparkContext(conf)
-    
-    //Split and tokenize text data
-		var nTokens = 0
-		val senDetector = SentenceDetectorFactory.create("vietnamese")
-		
-		val inputDirPath = ""
-		val outputDirPath = ""
 
-		val property = new Properties()
+    //~~~~~~~~~~Split and tokenize text data~~~~~~~~~~~~~~~~~~
+    var nTokens = 0
+    val senDetector = SentenceDetectorFactory.create("vietnamese")
+
+    val currentDir = new File(".").getCanonicalPath
+    val currentLibsDir = currentDir + File.separator + "libs"
+
+    val inputDirPath = currentDir + File.separator + "data" + File.separator + "in"
+    val outputDirPath = currentDir + File.separator + "data" + File.separator + "out"
+
+		val inputDirFile = new File(inputDirPath);
+
+    val property = new Properties()
+    property.setProperty("sentDetectionModel", currentLibsDir + File.separator + "models" + File.separator
+      + "sentDetection" + File.separator + "VietnameseSD.bin.gz");
+    property.setProperty("lexiconDFA", currentLibsDir + File.separator + "models" + File.separator + "tokenization"
+      + File.separator + "automata" + File.separator + "dfaLexicon.xml");
+    property.setProperty("unigramModel", currentLibsDir + File.separator + "models" + File.separator + "tokenization"
+      + File.separator + "bigram" + File.separator + "unigram.xml");
+    property.setProperty("bigramModel", currentLibsDir + File.separator + "models" + File.separator + "tokenization"
+      + File.separator + "bigram" + File.separator + "bigram.xml");
+    property.setProperty("externalLexicon", currentLibsDir + File.separator + "models" + File.separator + "tokenization"
+      + File.separator + "automata" + File.separator + "externalLexicon.xml");
+    property.setProperty("normalizationRules", currentLibsDir + File.separator + "models" + File.separator
+      + "tokenization" + File.separator + "normalization" + File.separator + "rules.txt");
+    property.setProperty("lexers", currentLibsDir + File.separator + "models" + File.separator + "tokenization"
+      + File.separator + "lexers" + File.separator + "lexers.xml");
+    property.setProperty("namedEntityPrefix", currentLibsDir + File.separator + "models" + File.separator
+      + "tokenization" + File.separator + "prefix" + File.separator + "namedEntityPrefix.xml");
     
+    val tokenizer = new VietTokenizer(property);
+		tokenizer.turnOffSentenceDetection();
+
+		// get all input files
+		val inputFiles = FileIterator.listFiles(inputDirFile,
+				new TextFileFilter(TokenizerOptions.TEXT_FILE_EXTENSION));
+		System.out.println("Tokenizing all files in the directory, please wait...");
+		val startTime = System.currentTimeMillis();
+		for (aFile <- inputFiles) {
+			// get the simple name of the file
+			val input = aFile.getName()
+			// the output file have the same name with the automatic file
+			val output = outputDirPath + File.separator + input
+			println(aFile.getAbsolutePath() + "\n" + output)
+			// tokenize the content of file
+			val sentences = senDetector.detectSentences(aFile.getAbsolutePath())
+			var matrixWords = Array[Array[String]]_
+			for (i <- 0 to sentences.length) {
+				val words = tokenizer.tokenize(sentences(i))
+				val wordsTmpArr = words(0).split(" ")
+				matrixWords(i) = Utils.removeDotToGetWords(wordsTmpArr);
+			}
+
+			// Calculate TFIDF
+			var tCalc = new TFIDFCalc();
+			var tfidfResultSet = new HashMap[String, Double];
+			for (i <- 0 to matrixWords.length) {
+				for (j <- 0 to matrixWords(i).length) {
+					nTokens++;
+					tfidfResultSet.put(matrixWords(i,j)+" ["+i+"]", tCalc.tfIdf(matrixWords[i], matrixWords, matrixWords[i][j]));
+				}
+			}
+			
+			// Sort descending
+			tfidfResultSet = (HashMap<String, Double>) Utils.sortByComparator(tfidfResultSet, false);
+			
+			// Show result
+			Set<String> keys = tfidfResultSet.keySet();
+			for (String key : keys) {
+				System.out.println(key + " ----- " + tfidfResultSet.get(key));
+			}
+
+		}
+		long endTime = System.currentTimeMillis();
+		float duration = (float) (endTime - startTime) / 1000;
+		System.out.println(
+				"Tokenized " + nTokens + " words of " + inputFiles.length + " files in " + duration + " (s).\n");
+		
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     // Load training data in LIBSVM format.
     val data = MLUtils.loadLibSVMFile(sc, "/home/hduser/git/Petunia/Petunia/data/in/sample_libsvm_data.txt")
 
@@ -56,7 +130,7 @@ class PetuniaMain {
     println("Area under ROC = " + auROC)
 
     // Save and load model
-    model.save(sc, "/home/hduser/git/Petunia/Petunia/data/out/svmModels.model")
-    val sameModel = SVMModel.load(sc, "/home/hduser/git/Petunia/Petunia/data/out/svmModels.model")
+    model.save(sc, outputDirPath + File.separator + "svmModels")
+    val sameModel = SVMModel.load(sc, outputDirPath + File.separator + "svmModels")
   }
 }
