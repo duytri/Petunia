@@ -14,7 +14,7 @@ import vn.hus.nlp.utils.FileIterator
 import vn.hus.nlp.utils.TextFileFilter
 import java.util.Properties
 import java.io.File
-import scala.collection.immutable.HashMap
+import scala.collection.mutable.HashMap
 
 class PetuniaMain {
   def main(args: Array[String]): Unit = {
@@ -67,20 +67,19 @@ class PetuniaMain {
 			println(aFile.getAbsolutePath() + "\n" + output)
 			// tokenize the content of file
 			val sentences = senDetector.detectSentences(aFile.getAbsolutePath())
-			var matrixWords = Array[Array[String]]_
+			var matrixWords = Array[Array[String]]
 			for (i <- 0 to sentences.length) {
 				val words = tokenizer.tokenize(sentences(i))
 				val wordsTmpArr = words(0).split(" ")
-				matrixWords(i) = Utils.removeDotToGetWords(wordsTmpArr);
+				matrixWords(i) = PetuniaUtils.removeDotToGetWords(wordsTmpArr);
 			}
 
 			// Calculate TFIDF
-			var tCalc = new TFIDFCalc();
 			var tfidfResultSet = new HashMap[String, Double];
 			for (i <- 0 to matrixWords.length) {
 				for (j <- 0 to matrixWords(i).length) {
-					nTokens++;
-					tfidfResultSet.put(matrixWords(i,j)+" ["+i+"]", tCalc.tfIdf(matrixWords[i], matrixWords, matrixWords[i][j]));
+					nTokens+=1
+					tfidfResultSet.put(matrixWords(i,j)+" ["+i+"]", TFIDFCalc.tfIdf(matrixWords(i), matrixWords, matrixWords(i,j)));
 				}
 			}
 			
