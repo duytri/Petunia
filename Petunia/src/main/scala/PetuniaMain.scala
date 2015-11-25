@@ -6,12 +6,27 @@ import org.apache.spark.SparkContext
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.mllib.classification.SVMWithSGD
 import org.apache.spark.mllib.classification.SVMModel
-
+import vn.hus.nlp.sd.SentenceDetector
+import vn.hus.nlp.sd.SentenceDetectorFactory
+import vn.hus.nlp.tokenizer.TokenizerOptions
+import vn.hus.nlp.tokenizer.VietTokenizer
+import vn.hus.nlp.utils.FileIterator
+import vn.hus.nlp.utils.TextFileFilter;
+import scala.util.Properties
 
 class PetuniaMain {
   def main(args: Array[String]): Unit = {
     val conf = new SparkConf().setAppName("ISLab.Petunia")
     val sc = new SparkContext(conf)
+    
+    //Split and tokenize text data
+		var nTokens = 0
+		val senDetector = SentenceDetectorFactory.create("vietnamese")
+		
+		val inputDirPath = ""
+		val outputDirPath = ""
+
+		val property = new Properties()
     
     // Load training data in LIBSVM format.
     val data = MLUtils.loadLibSVMFile(sc, "/home/hduser/git/Petunia/Petunia/data/in/sample_libsvm_data.txt")
