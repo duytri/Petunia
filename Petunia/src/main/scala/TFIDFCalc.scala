@@ -19,10 +19,11 @@ object TFIDFCalc {
     var docsSize = 0
     for (sentence <- sentences) {
       docsSize += 1
-      var tmpSen = sentence.map { x => x.toLowerCase() }
-      sentence.contains(term)
+      var flgContain = false
+      sentence.map { x => if (x.compareToIgnoreCase(term) == 0) flgContain = true }
+      if (flgContain) n += 1
     }
-    return Math.log10(docsSize / n);
+    return Math.log10(docsSize / n)
   }
 
   def tfIdf(doc: Array[String], docs: Array[ArrayBuffer[String]], term: String): Double = {
