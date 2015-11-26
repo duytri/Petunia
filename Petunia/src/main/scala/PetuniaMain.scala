@@ -15,6 +15,7 @@ import vn.hus.nlp.utils.TextFileFilter
 import java.util.Properties
 import java.io.File
 import scala.collection.mutable.HashMap
+import scala.collection.mutable.ArrayBuffer
 
 class PetuniaMain {
   def main(args: Array[String]): Unit = {
@@ -67,7 +68,7 @@ class PetuniaMain {
 			println(aFile.getAbsolutePath() + "\n" + output)
 			// tokenize the content of file
 			val sentences = senDetector.detectSentences(aFile.getAbsolutePath())
-			var matrixWords = Array[Array[String]]
+			var matrixWords = new Array[ArrayBuffer[String]](sentences.length)
 			for (i <- 0 to sentences.length) {
 				val words = tokenizer.tokenize(sentences(i))
 				val wordsTmpArr = words(0).split(" ")
@@ -79,7 +80,7 @@ class PetuniaMain {
 			for (i <- 0 to matrixWords.length) {
 				for (j <- 0 to matrixWords(i).length) {
 					nTokens+=1
-					tfidfResultSet.put(matrixWords(i,j)+" ["+i+"]", TFIDFCalc.tfIdf(matrixWords(i), matrixWords, matrixWords(i,j)));
+					tfidfResultSet.put(matrixWords(i)(j)+" ["+i+"]", TFIDFCalc.tfIdf(matrixWords(i), matrixWords, matrixWords(i)(j)));
 				}
 			}
 			
