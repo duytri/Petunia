@@ -85,13 +85,10 @@ class PetuniaMain {
       }
 
       // Sort descending
-      var tfidfResult = HashMap(tfidfResultSet.toSeq.sortWith(_._1 > _._1): _*)
+      var tfidfResult = HashMap(tfidfResultSet.toSeq.sortWith(_._2 > _._2): _*)
 
       // Show result
-      var keys = tfidfResult.keySet
-      for (key <- keys) {
-        println(key + " ----- " + tfidfResultSet.get(key))
-      }
+      tfidfResult map(f => println(f._1 +" -------- "+f._2))
 
     }
     var endTime = System.currentTimeMillis()
