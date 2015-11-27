@@ -32,7 +32,7 @@ class PetuniaMain {
     val inputDirPath = currentDir + File.separator + "data" + File.separator + "in"
     val outputDirPath = currentDir + File.separator + "data" + File.separator + "out"
 
-		val inputDirFile = new File(inputDirPath);
+    val inputDirFile = new File(inputDirPath);
 
     val property = new Properties()
     property.setProperty("sentDetectionModel", currentLibsDir + File.separator + "models" + File.separator
@@ -51,54 +51,53 @@ class PetuniaMain {
       + File.separator + "lexers" + File.separator + "lexers.xml");
     property.setProperty("namedEntityPrefix", currentLibsDir + File.separator + "models" + File.separator
       + "tokenization" + File.separator + "prefix" + File.separator + "namedEntityPrefix.xml");
-    
+
     val tokenizer = new VietTokenizer(property);
-		tokenizer.turnOffSentenceDetection();
+    tokenizer.turnOffSentenceDetection();
 
-		// get all input files
-		val inputFiles = FileIterator.listFiles(inputDirFile,
-				new TextFileFilter(TokenizerOptions.TEXT_FILE_EXTENSION));
-		System.out.println("Tokenizing all files in the directory, please wait...");
-		val startTime = System.currentTimeMillis();
-		for (aFile <- inputFiles) {
-			// get the simple name of the file
-			val input = aFile.getName()
-			// the output file have the same name with the automatic file
-			val output = outputDirPath + File.separator + input
-			println(aFile.getAbsolutePath() + "\n" + output)
-			// tokenize the content of file
-			val sentences = senDetector.detectSentences(aFile.getAbsolutePath())
-			var matrixWords = new Array[ArrayBuffer[String]](sentences.length)
-			for (i <- 0 to sentences.length) {
-				val words = tokenizer.tokenize(sentences(i))
-				val wordsTmpArr = words(0).split(" ")
-				matrixWords(i) = PetuniaUtils.removeDotToGetWords(wordsTmpArr);
-			}
+    // get all input files
+    val inputFiles = FileIterator.listFiles(inputDirFile,
+      new TextFileFilter(TokenizerOptions.TEXT_FILE_EXTENSION));
+    System.out.println("Tokenizing all files in the directory, please wait...");
+    val startTime = System.currentTimeMillis();
+    for (aFile <- inputFiles) {
+      // get the simple name of the file
+      val input = aFile.getName()
+      // the output file have the same name with the automatic file
+      val output = outputDirPath + File.separator + input
+      println(aFile.getAbsolutePath() + "\n" + output)
+      // tokenize the content of file
+      val sentences = senDetector.detectSentences(aFile.getAbsolutePath())
+      var matrixWords = new Array[ArrayBuffer[String]](sentences.length)
+      for (i <- 0 to sentences.length) {
+        val words = tokenizer.tokenize(sentences(i))
+        val wordsTmpArr = words(0).split(" ")
+        matrixWords(i) = PetuniaUtils.removeDotToGetWords(wordsTmpArr);
+      }
 
-			// Calculate TFIDF
-			var tfidfResultSet = new HashMap[String, Double];
-			for (i <- 0 to matrixWords.length) {
-				for (j <- 0 to matrixWords(i).length) {
-					nTokens+=1
-					tfidfResultSet.put(matrixWords(i)(j)+" ["+i+"]", TFIDFCalc.tfIdf(matrixWords(i), matrixWords, matrixWords(i)(j)));
-				}
-			}
-			
-			// Sort descending
-			tfidfResultSet = (HashMap<String, Double>) Utils.sortByComparator(tfidfResultSet, false);
-			
-			// Show result
-			Set<String> keys = tfidfResultSet.keySet();
-			for (String key : keys) {
-				System.out.println(key + " ----- " + tfidfResultSet.get(key));
-			}
+      // Calculate TFIDF
+      var tfidfResultSet = new HashMap[String, Double];
+      for (i <- 0 to matrixWords.length) {
+        for (j <- 0 to matrixWords(i).length) {
+          nTokens += 1
+          tfidfResultSet.put(matrixWords(i)(j) + " [" + i + "]", TFIDFCalc.tfIdf(matrixWords(i).toArray, matrixWords, matrixWords(i)(j)));
+        }
+      }
 
-		}
-		long endTime = System.currentTimeMillis();
-		float duration = (float) (endTime - startTime) / 1000;
-		System.out.println(
-				"Tokenized " + nTokens + " words of " + inputFiles.length + " files in " + duration + " (s).\n");
-		
+      // Sort descending
+      var tfidfResult = HashMap(tfidfResultSet.toSeq.sortWith(_._1 > _._1): _*)
+
+      // Show result
+      var keys = tfidfResult.keySet
+      for (key <- keys) {
+        println(key + " ----- " + tfidfResultSet.get(key))
+      }
+
+    }
+    var endTime = System.currentTimeMillis()
+    var duration = (endTime - startTime) / 1000
+    println(
+      "Tokenized " + nTokens + " words of " + inputFiles.length + " files in " + duration + " (s).\n");
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
