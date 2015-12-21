@@ -74,7 +74,17 @@ class PetuniaMain {
         val wordsTmpArr = words(0).split(" ")
         matrixWords(i) = PetuniaUtils.removeDotToGetWords(wordsTmpArr);
       }
-
+      
+      // Remove stopwords
+      //// Load stopwords from file
+      val stopwordFilePath = "C:\\Users\\duytr\\Desktop\\vietname-stopwords-dash.txt"
+      var arrStopwords = new ArrayBuffer[String]
+      Source.fromFile(stopwordFilePath, "utf-8").getLines().foreach { x => arrStopwords.append(x) }
+      //// Foreach sentence, remove stopwords
+      for (i <- 0 to sentences.length) {
+        
+      }
+      
       // Calculate TFIDF
       var tfidfResultSet = new HashMap[String, Double];
       for (i <- 0 to matrixWords.length) {
