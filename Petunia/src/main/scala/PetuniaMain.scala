@@ -16,6 +16,7 @@ import java.util.Properties
 import java.io.File
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.ArrayBuffer
+import scala.io.Source
 
 class PetuniaMain {
   def main(args: Array[String]): Unit = {
@@ -74,17 +75,17 @@ class PetuniaMain {
         val wordsTmpArr = words(0).split(" ")
         matrixWords(i) = PetuniaUtils.removeDotToGetWords(wordsTmpArr);
       }
-      
+
       // Remove stopwords
       //// Load stopwords from file
-      val stopwordFilePath = "C:\\Users\\duytr\\Desktop\\vietname-stopwords-dash.txt"
+      val stopwordFilePath = "./libs/vietnamese-stopwords.txt"
       var arrStopwords = new ArrayBuffer[String]
       Source.fromFile(stopwordFilePath, "utf-8").getLines().foreach { x => arrStopwords.append(x) }
       //// Foreach sentence, remove stopwords
       for (i <- 0 to sentences.length) {
-        
+        matrixWords(i) --= arrStopwords
       }
-      
+
       // Calculate TFIDF
       var tfidfResultSet = new HashMap[String, Double];
       for (i <- 0 to matrixWords.length) {
@@ -95,10 +96,10 @@ class PetuniaMain {
       }
 
       // Sort descending
-      var tfidfResult = HashMap(tfidfResultSet.toSeq.sortWith(_._2 > _._2): _*)
+      //var tfidfResult = HashMap(tfidfResultSet.toSeq.sortWith(_._2 > _._2): _*)
 
       // Show result
-      tfidfResult map(f => println(f._1 +" -------- "+f._2))
+      tfidfResultSet map (f => println(f._1 + " -------- " + f._2))
 
     }
     var endTime = System.currentTimeMillis()
