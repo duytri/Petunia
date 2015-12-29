@@ -1,32 +1,25 @@
 package main.scala
 
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.Map
 
 object TFIDFCalc {
-  def tf(sentence: Array[String], term: String): Double = {
-    var termAppear = 0
-    var senSize = 0
-    for (word <- sentence) {
-      senSize += 1
-      if (term.equalsIgnoreCase(word))
-        termAppear += 1
-    }
-    return termAppear / sentence.length
+  def tf(term: String, doc: Map[String, Int]): Double = {
+    var wordCount = 0d
+    doc.foreach((x => wordCount += x._2))
+    doc(term) / wordCount
   }
 
-  def idf(sentences: Array[ArrayBuffer[String]], term: String): Double = {
+  def idf(term: String, allDocs: Array[Map[String, Int]]): Double = {
     var n = 0d
-    var docsSize = 0
-    for (sentence <- sentences) {
-      docsSize += 1
-      var flgContain = false
-      sentence.map { x => if (x.compareToIgnoreCase(term) == 0) flgContain = true }
-      if (flgContain) n += 1
-    }
-    return Math.log10(docsSize / n)
+    allDocs.foreach(x => {
+      if (x.contains(term)) n += 1
+    })
+
+    return Math.log10(allDocs.length / n)
   }
 
-  def tfIdf(doc: Array[String], docs: Array[ArrayBuffer[String]], term: String): Double = {
-    return tf(doc, term) * idf(docs, term)
+  def tfIdf(term: String, doc: Map[String, Int], allDocs: Array[Map[String, Int]]): Double = {
+    return tf(term, doc) * idf(term, allDocs)
   }
 }

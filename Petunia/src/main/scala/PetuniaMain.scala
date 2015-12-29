@@ -17,6 +17,7 @@ import java.io.File
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
+import scala.collection.mutable.Map
 
 class PetuniaMain {
   def main(args: Array[String]): Unit = {
@@ -61,6 +62,9 @@ class PetuniaMain {
       new TextFileFilter(TokenizerOptions.TEXT_FILE_EXTENSION));
     System.out.println("Tokenizing all files in the directory, please wait...");
     val startTime = System.currentTimeMillis();
+
+    var wordSetByFile = new Array[Map[String, Int]](inputFiles.length) // Map[word, frequency in whole text]
+    //Foreach text file
     for (aFile <- inputFiles) {
       // get the simple name of the file
       val input = aFile.getName()
@@ -69,39 +73,36 @@ class PetuniaMain {
       println(aFile.getAbsolutePath() + "\n" + output)
       // tokenize the content of file
       val sentences = senDetector.detectSentences(aFile.getAbsolutePath())
-      var matrixWords = new Array[ArrayBuffer[String]](sentences.length)
       for (i <- 0 to sentences.length) {
         val words = tokenizer.tokenize(sentences(i))
         val wordsTmpArr = words(0).split(" ")
-        matrixWords(i) = PetuniaUtils.removeDotToGetWords(wordsTmpArr);
+        PetuniaUtils.addOrIgnore(wordSetByFile(i), PetuniaUtils.removeDotToGetWords(wordsTmpArr))
       }
-
-      // Remove stopwords
-      //// Load stopwords from file
-      val stopwordFilePath = "./libs/vietnamese-stopwords.txt"
-      var arrStopwords = new ArrayBuffer[String]
-      Source.fromFile(stopwordFilePath, "utf-8").getLines().foreach { x => arrStopwords.append(x) }
-      //// Foreach sentence, remove stopwords
-      for (i <- 0 to sentences.length) {
-        matrixWords(i) --= arrStopwords
-      }
-
-      // Calculate TFIDF
-      var tfidfResultSet = new HashMap[String, Double];
-      for (i <- 0 to matrixWords.length) {
-        for (j <- 0 to matrixWords(i).length) {
-          nTokens += 1
-          tfidfResultSet.put(matrixWords(i)(j) + " [" + i + "]", TFIDFCalc.tfIdf(matrixWords(i).toArray, matrixWords, matrixWords(i)(j)));
-        }
-      }
-
-      // Sort descending
-      //var tfidfResult = HashMap(tfidfResultSet.toSeq.sortWith(_._2 > _._2): _*)
-
-      // Show result
-      tfidfResultSet map (f => println(f._1 + " -------- " + f._2))
-
     }
+    // Calculate TFIDF
+    var tfidfWordSet = new Array[Map[String, Double]](inputFiles.length) // Map[word, TF-IDF value]
+    for(i <- 0 to inputFiles.length){
+      for(oneWord <- wordSetByFile(i)){
+        tfidfWordSet(i) += oneWord._1 -> TFIDFCalc.tfIdf(oneWord._1, wordSetByFile(i), wordSetByFile)
+      }
+    }
+
+    // Remove stopwords
+    //// Load stopwords from file
+    val stopwordFilePath = "./libs/vietnamese-stopwords.txt"
+    var arrStopwords = new ArrayBuffer[String]
+    Source.fromFile(stopwordFilePath, "utf-8").getLines().foreach { x => arrStopwords.append(x) }
+    //// Foreach sentence, remove stopwords
+    for (i <- 0 to sentences.length) {
+      wordSetByFile(i) --= arrStopwords
+    }
+
+    // Sort descending
+    //var tfidfResult = HashMap(tfidfResultSet.toSeq.sortWith(_._2 > _._2): _*)
+
+    // Show result
+    tfidfWordSet map (f => println(f._1 + " -------- " + f._2))
+
     var endTime = System.currentTimeMillis()
     var duration = (endTime - startTime) / 1000
     println(
