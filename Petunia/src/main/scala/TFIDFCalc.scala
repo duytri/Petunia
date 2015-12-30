@@ -19,7 +19,9 @@ object TFIDFCalc {
     return Math.log10(allDocs.length / n)
   }
 
-  def tfIdf(term: String, doc: Map[String, Int], allDocs: Array[Map[String, Int]]): Double = {
+  def tfIdf(word: (String, Int), docIndex: Int, allDocs: Array[Map[String, Int]]): Double = {
+    val term = word._1
+    val doc = allDocs(docIndex)
     return tf(term, doc) * idf(term, allDocs)
   }
 }
