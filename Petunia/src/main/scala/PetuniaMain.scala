@@ -19,6 +19,8 @@ import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 import scala.collection.mutable.Map
 import scala.collection.mutable.MapBuilder
+import org.apache.spark.rdd.RDD
+import org.apache.spark.mllib.regression.LabeledPoint
 
 class PetuniaMain {
   def main(args: Array[String]): Unit = {
@@ -111,6 +113,10 @@ class PetuniaMain {
         else attrWords += (x._1 -> (x._2._2._1, x._2._2._2))
       })
     }
+    
+    //~~~~~~~~~~Create vector~~~~~~~~~~
+    var vectorWords = RDD
+    vectorWords += LabeledPoint()
 
     // Sort descending
     //var tfidfResult = HashMap(tfidfResultSet.toSeq.sortWith(_._2 > _._2): _*)
