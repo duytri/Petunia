@@ -18,6 +18,7 @@ import scala.collection.mutable.HashMap
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 import scala.collection.mutable.Map
+import scala.collection.mutable.MapBuilder
 
 class PetuniaMain {
   def main(args: Array[String]): Unit = {
@@ -81,7 +82,7 @@ class PetuniaMain {
       }
     }
     //~~~~~~~~~~Calculate TFIDF~~~~~~~~~~
-    var tfidfWordSet = new Array[Map[String, Double]](inputFiles.length) // Map[word, TF-IDF value]
+    var tfidfWordSet = new Array[Map[String, (Double, (Int, Double))]](inputFiles.length) // Map[word, (TF-value, (doc no., number of doc contains word))]
     for (i <- 0 to inputFiles.length) {
       for (oneWord <- wordSetByFile(i)) {
         tfidfWordSet(i) += oneWord._1 -> TFIDFCalc.tfIdf(oneWord, i, wordSetByFile)
@@ -100,9 +101,14 @@ class PetuniaMain {
 
     //~~~~~~~~~~Normalize by TFIDF~~~~~~~~~~
     val lowerUpperBound = (0, 1)
+    var attrWords = Map[String, (Int, Double)]()
     for (i <- 0 to inputFiles.length) {
-      tfidfWordSet.foreach(x => {
-
+      tfidfWordSet(i).foreach(x => {
+        val tfidf = x._2._1 * Math.log10(x._2._2._1 / x._2._2._2)
+        if (tfidf <= lowerUpperBound._1 || tfidf >= lowerUpperBound._2) {
+          tfidfWordSet(i).remove(x._1)
+        }
+        else attrWords += (x._1 -> (x._2._2._1, x._2._2._2))
       })
     }
 

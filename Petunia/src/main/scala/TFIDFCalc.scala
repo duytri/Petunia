@@ -10,18 +10,18 @@ object TFIDFCalc {
     doc(term) / wordCount
   }
 
-  def idf(term: String, allDocs: Array[Map[String, Int]]): Double = {
+  def idf(term: String, allDocs: Array[Map[String, Int]]): (Int, Double) = {
     var n = 0d
     allDocs.foreach(x => {
       if (x.contains(term)) n += 1
     })
 
-    return Math.log10(allDocs.length / n)
+    return (allDocs.length -> n)
   }
 
-  def tfIdf(word: (String, Int), docIndex: Int, allDocs: Array[Map[String, Int]]): Double = {
+  def tfIdf(word: (String, Int), docIndex: Int, allDocs: Array[Map[String, Int]]): (Double, (Int, Double)) = {
     val term = word._1
     val doc = allDocs(docIndex)
-    return tf(term, doc) * idf(term, allDocs)
+    return (tf(term, doc) -> idf(term, allDocs))
   }
 }
