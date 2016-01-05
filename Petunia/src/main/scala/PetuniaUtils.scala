@@ -18,11 +18,15 @@ object PetuniaUtils {
   }
 
   def addOrIgnore(eachWordSet: Map[String, Int], someWords: ArrayBuffer[String]): Unit = {
+    val specialChars = Array((" "), ("."), (","), ("\t"), ("..."))
     someWords.foreach { x =>
       {
-        if (!eachWordSet.contains(x))
-          eachWordSet += x -> 1
-        else eachWordSet.update(x, eachWordSet(x) + 1)
+        if (!specialChars.contains(x)) {
+          val y = x.toLowerCase()
+          if (!eachWordSet.contains(y))
+            eachWordSet += y -> 1
+          else eachWordSet.update(y, eachWordSet(y) + 1)
+        }
       }
     }
   }

@@ -6,6 +6,9 @@ import org.apache.spark.SparkContext
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.mllib.classification.SVMWithSGD
 import org.apache.spark.mllib.classification.SVMModel
+import org.apache.spark.rdd.RDD
+import org.apache.spark.mllib.regression.LabeledPoint
+import org.apache.spark.mllib.linalg.Vectors
 import vn.hus.nlp.sd.SentenceDetector
 import vn.hus.nlp.sd.SentenceDetectorFactory
 import vn.hus.nlp.tokenizer.TokenizerOptions
@@ -19,8 +22,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 import scala.collection.mutable.Map
 import scala.collection.mutable.MapBuilder
-import org.apache.spark.rdd.RDD
-import org.apache.spark.mllib.regression.LabeledPoint
+import org.apache.spark.api.java.JavaRDD
 
 class PetuniaMain {
   def main(args: Array[String]): Unit = {
@@ -38,7 +40,11 @@ class PetuniaMain {
     val inputDirPath = currentDir + File.separator + "data" + File.separator + "in"
     val outputDirPath = currentDir + File.separator + "data" + File.separator + "out"
 
-    val inputDirFile = new File(inputDirPath);
+    val input0 = inputDirPath + File.separator + "0"
+    val input1 = inputDirPath + File.separator + "1"
+
+    val inputDirFile0 = new File(input0)
+    val inputDirFile1 = new File(input1)
 
     val property = new Properties()
     property.setProperty("sentDetectionModel", currentLibsDir + File.separator + "models" + File.separator
@@ -58,16 +64,17 @@ class PetuniaMain {
     property.setProperty("namedEntityPrefix", currentLibsDir + File.separator + "models" + File.separator
       + "tokenization" + File.separator + "prefix" + File.separator + "namedEntityPrefix.xml");
 
-    val tokenizer = new VietTokenizer(property);
-    tokenizer.turnOffSentenceDetection();
+    val tokenizer = new VietTokenizer(property)
+    tokenizer.turnOffSentenceDetection()
 
     //~~~~~~~~~~Get all input files~~~~~~~~~~
-    val inputFiles = FileIterator.listFiles(inputDirFile,
-      new TextFileFilter(TokenizerOptions.TEXT_FILE_EXTENSION));
-    System.out.println("Tokenizing all files in the directory, please wait...");
-    val startTime = System.currentTimeMillis();
+    var inputFiles0 = FileIterator.listFiles(inputDirFile0, new TextFileFilter(TokenizerOptions.TEXT_FILE_EXTENSION))
+    var inputFiles1 = FileIterator.listFiles(inputDirFile1, new TextFileFilter(TokenizerOptions.TEXT_FILE_EXTENSION))
+    val inputFiles = inputFiles0 ++ inputFiles1
+    println("Tokenizing all files in the directory, please wait...")
+    val startTime = System.currentTimeMillis()
 
-    var wordSetByFile = new Array[Map[String, Int]](inputFiles.length) // Map[word, frequency in document]
+    var wordSetByFile = new Array[HashMap[String, Int]](inputFiles.length) // Map[word, frequency in document]
     //Foreach text file
     for (aFile <- inputFiles) {
       // get the simple name of the file
@@ -84,9 +91,11 @@ class PetuniaMain {
       }
     }
     //~~~~~~~~~~Calculate TFIDF~~~~~~~~~~
-    var tfidfWordSet = new Array[Map[String, (Double, (Int, Double))]](inputFiles.length) // Map[word, (TF-value, (doc no., number of doc contains word))]
-    for (i <- 0 to inputFiles.length) {
+    //var tfidfWordSet = new Array[HashMap[String, (Double, (Int, Double))]](inputFiles.length) // Map[word, (TF-value, (doc no., number of doc contains word))]
+    var tfidfWordSet = new Array[HashMap[String, Double]](inputFiles.length) // Map[word, TF*IDF-value]
+    for (i <- 0 to inputFiles.length - 1) {
       for (oneWord <- wordSetByFile(i)) {
+        //tfidfWordSet(i) += oneWord._1 -> TFIDFCalc.tfIdf(oneWord, i, wordSetByFile)
         tfidfWordSet(i) += oneWord._1 -> TFIDFCalc.tfIdf(oneWord, i, wordSetByFile)
       }
     }
@@ -97,26 +106,40 @@ class PetuniaMain {
     var arrStopwords = new ArrayBuffer[String]
     Source.fromFile(stopwordFilePath, "utf-8").getLines().foreach { x => arrStopwords.append(x) }
     //// Foreach document, remove stopwords
-    for (i <- 0 to inputFiles.length) {
+    for (i <- 0 to inputFiles.length - 1) {
       tfidfWordSet(i) --= arrStopwords
     }
 
     //~~~~~~~~~~Normalize by TFIDF~~~~~~~~~~
     val lowerUpperBound = (0, 1)
-    var attrWords = Map[String, (Int, Double)]()
-    for (i <- 0 to inputFiles.length) {
+    //var attrWords = HashMap[String, (Int, Double)]()
+    var attrWords = ArrayBuffer[String]()
+    for (i <- 0 to inputFiles.length - 1) {
       tfidfWordSet(i).foreach(x => {
-        val tfidf = x._2._1 * Math.log10(x._2._2._1 / x._2._2._2)
-        if (tfidf <= lowerUpperBound._1 || tfidf >= lowerUpperBound._2) {
+        //val tfidf = x._2._1 * Math.log10(x._2._2._1 / x._2._2._2)
+        if (x._2 <= lowerUpperBound._1 || x._2 >= lowerUpperBound._2) {
           tfidfWordSet(i).remove(x._1)
-        }
-        else attrWords += (x._1 -> (x._2._2._1, x._2._2._2))
+        } else attrWords += x._1 // += (x._1 -> (x._2._2._1, x._2._2._2))
       })
     }
-    
+
     //~~~~~~~~~~Create vector~~~~~~~~~~
-    var vectorWords = RDD
-    vectorWords += LabeledPoint()
+    var vectorWords = new ArrayBuffer[LabeledPoint](inputFiles.length)
+    //vectorWords += LabeledPoint()
+    for (i <- 0 to inputFiles.length - 1) {
+      var vector = new ArrayBuffer[Double]
+      for (word <- attrWords) {
+        if (tfidfWordSet(i).contains(word)) {
+          vector.append(tfidfWordSet(i).get(word).get)
+        } else vector.append(0d)
+      }
+      if (i < inputFiles0.length)
+        vectorWords += LabeledPoint(0.0, Vectors.dense(vector.toArray))
+      else
+        vectorWords += LabeledPoint(1.0, Vectors.dense(vector.toArray))
+    }
+    
+    val rddVectors = (RDD[LabeledPoint])vectorWords
 
     // Sort descending
     //var tfidfResult = HashMap(tfidfResultSet.toSeq.sortWith(_._2 > _._2): _*)
@@ -159,7 +182,7 @@ class PetuniaMain {
     println("Area under ROC = " + auROC)
 
     // Save and load model
-    model.save(sc, outputDirPath + File.separator + "svmModels")
-    val sameModel = SVMModel.load(sc, outputDirPath + File.separator + "svmModels")
+    //model.save(sc, outputDirPath + File.separator + "svmModels")
+    //val sameModel = SVMModel.load(sc, outputDirPath + File.separator + "svmModels")
   }
 }
