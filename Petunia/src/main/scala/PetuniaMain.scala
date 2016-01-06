@@ -124,7 +124,8 @@ class PetuniaMain {
     }
 
     //~~~~~~~~~~Create vector~~~~~~~~~~
-    var vectorWords = new ArrayBuffer[LabeledPoint](inputFiles.length)
+    var vectorWords : RDD[LabeledPoint] = sc.emptyRDD[LabeledPoint]
+    val rdd : RDD[LabeledPoint] = sc.emptyRDD[LabeledPoint]
     //vectorWords += LabeledPoint()
     for (i <- 0 to inputFiles.length - 1) {
       var vector = new ArrayBuffer[Double]
@@ -134,13 +135,11 @@ class PetuniaMain {
         } else vector.append(0d)
       }
       if (i < inputFiles0.length)
-        vectorWords += LabeledPoint(0.0, Vectors.dense(vector.toArray))
+        vectorWords ++ PetuniaUtils.convert2RDD(rdd, LabeledPoint(0.0, Vectors.dense(vector.toArray)))
       else
-        vectorWords += LabeledPoint(1.0, Vectors.dense(vector.toArray))
+        vectorWords ++ PetuniaUtils.convert2RDD(rdd, LabeledPoint(1.0, Vectors.dense(vector.toArray)))
     }
     
-    val rddVectors = (RDD[LabeledPoint])vectorWords
-
     // Sort descending
     //var tfidfResult = HashMap(tfidfResultSet.toSeq.sortWith(_._2 > _._2): _*)
 
@@ -155,10 +154,10 @@ class PetuniaMain {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     // Load training data in LIBSVM format.
-    val data = MLUtils.loadLibSVMFile(sc, "/home/hduser/git/Petunia/Petunia/data/in/sample_libsvm_data.txt")
+    //val data = MLUtils.loadLibSVMFile(sc, "/home/hduser/git/Petunia/Petunia/data/in/sample_libsvm_data.txt")
 
-    // Split data into training (60%) and test (40%).
-    val splits = data.randomSplit(Array(0.6, 0.4), seed = 11L)
+    // Split data into training (70%) and test (30%).
+    val splits = vectorWords.randomSplit(Array(0.7, 0.3), seed = 11L)
     val training = splits(0).cache()
     val test = splits(1)
 

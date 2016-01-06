@@ -2,6 +2,9 @@ package main.scala
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.Map
+import org.apache.spark.mllib.regression.LabeledPoint
+import org.apache.spark.rdd.RDD
+import org.apache.spark.SparkContext
 
 object PetuniaUtils {
   def removeDotToGetWords(wordsTmpArray: Array[String]): ArrayBuffer[String] = {
@@ -28,6 +31,12 @@ object PetuniaUtils {
           else eachWordSet.update(y, eachWordSet(y) + 1)
         }
       }
+    }
+  }
+  
+  def convert2RDD(rdd: RDD[LabeledPoint], label: LabeledPoint): RDD[LabeledPoint] = {
+    rdd.map { x =>
+      label
     }
   }
 }
