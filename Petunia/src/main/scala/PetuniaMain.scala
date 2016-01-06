@@ -135,9 +135,9 @@ class PetuniaMain {
         } else vector.append(0d)
       }
       if (i < inputFiles0.length)
-        vectorWords ++ PetuniaUtils.convert2RDD(rdd, LabeledPoint(0.0, Vectors.dense(vector.toArray)))
+        vectorWords ++ PetuniaUtils.convert2RDD(rdd, LabeledPoint(0, Vectors.dense(vector.toArray)))
       else
-        vectorWords ++ PetuniaUtils.convert2RDD(rdd, LabeledPoint(1.0, Vectors.dense(vector.toArray)))
+        vectorWords ++ PetuniaUtils.convert2RDD(rdd, LabeledPoint(1, Vectors.dense(vector.toArray)))
     }
     
     // Sort descending
