@@ -20,9 +20,6 @@ import java.io.File
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
-import scala.collection.mutable.Map
-import scala.collection.mutable.MapBuilder
-import org.apache.spark.api.java.JavaRDD
 
 class PetuniaMain {
   def main(args: Array[String]): Unit = {

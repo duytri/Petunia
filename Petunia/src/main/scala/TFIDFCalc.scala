@@ -37,6 +37,6 @@ object TFIDFCalc {
   def tfIdf2(word: (String, Int), docIndex: Int, allDocs: Array[HashMap[String, Int]]): (Double, (Int, Double)) = {
     val term = word._1
     val doc = allDocs(docIndex)
-    return (tf(term, doc) -> idf(term, allDocs))
+    return (tf(term, doc) -> idf2(term, allDocs))
   }
 }
