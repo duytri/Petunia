@@ -34,8 +34,8 @@ class PetuniaMain {
     val currentDir = new File(".").getCanonicalPath
     val currentLibsDir = currentDir + File.separator + "libs"
 
-    val inputDirPath = currentDir + File.separator + "data" + File.separator + "in"
-    val outputDirPath = currentDir + File.separator + "data" + File.separator + "out"
+    val inputDirPath = "/home/hduser/data/in"
+    //val outputDirPath = currentDir + File.separator + "data" + File.separator + "out"
 
     val input0 = inputDirPath + File.separator + "0"
     val input1 = inputDirPath + File.separator + "1"
@@ -77,8 +77,8 @@ class PetuniaMain {
       // get the simple name of the file
       val input = aFile.getName()
       // the output file have the same name with the automatic file
-      val output = outputDirPath + File.separator + input
-      println(aFile.getAbsolutePath() + "\n" + output)
+      //val output = outputDirPath + File.separator + input
+      //println(aFile.getAbsolutePath() + "\n" + output)
       // tokenize the content of file
       val sentences = senDetector.detectSentences(aFile.getAbsolutePath())
       for (i <- 0 to sentences.length) {
