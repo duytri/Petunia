@@ -9,3 +9,5 @@ libraryDependencies ++= Seq(
 )
 
 unmanagedBase <<= baseDirectory { base => base / "libs" }
+
+mainClass in Compile := Some("main.scala.PetuniaMain")

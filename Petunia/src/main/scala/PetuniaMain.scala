@@ -21,7 +21,7 @@ import scala.collection.mutable.HashMap
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
-class PetuniaMain {
+object PetuniaMain {
   def main(args: Array[String]): Unit = {
     //~~~~~~~~~~Initialization~~~~~~~~~~
     val conf = new SparkConf().setAppName("ISLab.Petunia")
