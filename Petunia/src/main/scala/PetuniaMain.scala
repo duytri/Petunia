@@ -20,11 +20,13 @@ import java.io.File
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
+import java.io.BufferedWriter
+import java.io.FileWriter
 
 object PetuniaMain {
   def main(args: Array[String]): Unit = {
     //~~~~~~~~~~Initialization~~~~~~~~~~
-    val conf = new SparkConf().setAppName("ISLab.Petunia")
+    val conf = new SparkConf().setAppName("ISLab.Petunia").setMaster("local[4]")
     val sc = new SparkContext(conf)
 
     //~~~~~~~~~~Split and tokenize text data~~~~~~~~~~
@@ -34,7 +36,7 @@ object PetuniaMain {
     val currentDir = new File(".").getCanonicalPath
     val currentLibsDir = currentDir + File.separator + "libs"
 
-    val inputDirPath = "/home/hduser/data/in"
+    val inputDirPath = currentDir + "/data/in"
     //val outputDirPath = currentDir + File.separator + "data" + File.separator + "out"
 
     val input0 = inputDirPath + File.separator + "0"
@@ -121,8 +123,8 @@ object PetuniaMain {
     }
 
     //~~~~~~~~~~Create vector~~~~~~~~~~
-    var vectorWords : RDD[LabeledPoint] = sc.emptyRDD[LabeledPoint]
-    val rdd : RDD[LabeledPoint] = sc.emptyRDD[LabeledPoint]
+    var vectorWords: RDD[LabeledPoint] = sc.emptyRDD[LabeledPoint]
+    val rdd: RDD[LabeledPoint] = sc.emptyRDD[LabeledPoint]
     //vectorWords += LabeledPoint()
     for (i <- 0 to inputFiles.length - 1) {
       var vector = new ArrayBuffer[Double]
@@ -136,7 +138,7 @@ object PetuniaMain {
       else
         vectorWords ++ PetuniaUtils.convert2RDD(rdd, LabeledPoint(1, Vectors.dense(vector.toArray)))
     }
-    
+
     // Sort descending
     //var tfidfResult = HashMap(tfidfResultSet.toSeq.sortWith(_._2 > _._2): _*)
 
