@@ -29,12 +29,12 @@ object PetuniaMain {
     val conf = new SparkConf().setAppName("ISLab.Petunia").setMaster("local[4]")
     val sc = new SparkContext(conf)
 
+    val currentDir = new File(".").getCanonicalPath
+    println(currentDir)
+    val currentLibsDir = currentDir + File.separator + "libs"
     //~~~~~~~~~~Split and tokenize text data~~~~~~~~~~
     var nTokens = 0
     val senDetector = SentenceDetectorFactory.create("vietnamese")
-
-    val currentDir = new File(".").getCanonicalPath
-    val currentLibsDir = currentDir + File.separator + "libs"
 
     val inputDirPath = currentDir + "/data/in"
     //val outputDirPath = currentDir + File.separator + "data" + File.separator + "out"
@@ -86,7 +86,7 @@ object PetuniaMain {
       for (i <- 0 to sentences.length) {
         val words = tokenizer.tokenize(sentences(i))
         val wordsTmpArr = words(0).split(" ")
-        PetuniaUtils.addOrIgnore(wordSetByFile(i), PetuniaUtils.removeDotToGetWords(wordsTmpArr))
+        PetuniaUtils.addOrIgnore(wordSetByFile(i), wordsTmpArr)
       }
     }
     //~~~~~~~~~~Calculate TFIDF~~~~~~~~~~
